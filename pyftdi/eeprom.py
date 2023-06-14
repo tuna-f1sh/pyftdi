@@ -690,9 +690,15 @@ class FtdiEeprom:
             dynpos = 0x40
         data_pos = dynpos
         # start of var-strings in sector 1 (used for mirrored config)
-        s1_vstr_start = data_pos - self.mirror_sector
+        if self.is_mirroring_enabled:
+            s1_vstr_start = data_pos - self.mirror_sector
+        else:
+            s1_vstr_start = data_pos
         tbl_pos = 0x0e
-        tbl_sector2_pos = self.mirror_sector + tbl_pos
+        if self.is_mirroring_enabled:
+            tbl_sector2_pos = self.mirror_sector + tbl_pos
+        else:
+            tbl_sector2_pos = tbl_pos
         for name in self.VAR_STRINGS:
             try:
                 ustr = self._config[name].encode('utf-16le')
