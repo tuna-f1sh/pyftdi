@@ -373,6 +373,19 @@ class Ftdi:
                                      cls.DEFAULT_VENDOR)
 
     @classmethod
+    def list_devices_urls(cls, url: Optional[str] = None) -> \
+            List[Tuple[str, str]]:
+        """List of URLs of connected FTDI devices.
+
+           :param url: a pattern URL to restrict the search
+           :return: list of (url, descriptors)
+        """
+        devdescs = UsbTools.list_devices(url or 'ftdi:///?',
+                                     cls.VENDOR_IDS, cls.PRODUCT_IDS,
+                                     cls.DEFAULT_VENDOR)
+        return UsbTools.build_dev_strings(url or 'ftdi:///?', cls.VENDOR_IDS, cls.PRODUCT_IDS, devdescs)
+
+    @classmethod
     def show_devices(cls, url: Optional[str] = None,
                      out: Optional[TextIO] = None) -> None:
         """Print the URLs and descriptors of connected FTDI devices.
