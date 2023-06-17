@@ -694,6 +694,9 @@ class FtdiEeprom:
             s1_vstr_start = data_pos - self.mirror_sector
         else:
             s1_vstr_start = data_pos
+        # position of string offset table in sector 1, starts with manufacturer
+        # Addr 0E: Offset of the manufacturer string + 0x80, calculated later
+        # Addr 0F: Length of manufacturer string
         tbl_pos = 0x0e
         if self.is_mirroring_enabled:
             tbl_sector2_pos = self.mirror_sector + tbl_pos
@@ -708,14 +711,14 @@ class FtdiEeprom:
             stream.append(length)
             stream.append(0x03)  # string descriptor
             stream.extend(ustr)
-            self._eeprom[tbl_pos] = data_pos
+            self._eeprom[tbl_pos] = (data_pos & 0xFF) | 0x80
             if self.is_mirroring_enabled:
-                self._eeprom[tbl_sector2_pos] = data_pos
+                self._eeprom[tbl_sector2_pos] = (data_pos & 0xFF) | 0x80
             tbl_pos += 1
             tbl_sector2_pos += 1
-            self._eeprom[tbl_pos] = length
+            self._eeprom[tbl_pos] = length & 0xFF
             if self.is_mirroring_enabled:
-                self._eeprom[tbl_sector2_pos] = length
+                self._eeprom[tbl_sector2_pos] = length & 0xFF
             tbl_pos += 1
             tbl_sector2_pos += 1
             data_pos += length
@@ -723,7 +726,7 @@ class FtdiEeprom:
             self._eeprom[s1_vstr_start:s1_vstr_start+len(stream)] = stream
         self._eeprom[dynpos:dynpos+len(stream)] = stream
         mtp = self._ftdi.device_version == 0x1000
-        crc_pos = 0x100 if mtp else self._size
+        crc_pos = (0x100 if mtp else self._size) - 1 # -1 for CRC byte
         rem = crc_pos - (dynpos + len(stream))
         if rem < 0:
             oversize = (-rem + 2) // 2
